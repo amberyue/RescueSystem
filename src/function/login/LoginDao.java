@@ -31,7 +31,6 @@ public class LoginDao {
 				loginResult.setRetcode("0");
 				loginResult.setMsg("");
 			}
-			
 			else{
 				loginResult.setMsg("登陆用户名不存在");
 				loginResult.setRetcode("2");

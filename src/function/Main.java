@@ -19,6 +19,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
+import service.UsersService;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import bean.BasicResult;
@@ -75,6 +76,7 @@ public class Main extends HttpServlet {
 		function.add("005");
 		function.add("006");
 		function.add("009");
+		function.add("010");
 		BasicResult BasicResult = new BasicResult();
 		SimpleDateFormat s = new SimpleDateFormat("yy-MM-dd HH:mm:ss");
 		long time = (long) 0;
@@ -367,10 +369,28 @@ public class Main extends HttpServlet {
 						} catch (SQLException e) {
 							// TODO Auto-generated catch block
 							e.printStackTrace();
-							
 						}
-						 
-						 
+					}
+					case 10:{
+//					String UserID,String UserName,char Sex,Date Birthday,String Tel,String IDNo
+						String UserID= data.getString("UserID");
+						String UserName=data.getString("UserName");
+						String Sex=data.getString("Sex");
+						
+						String birthday=data.getString("Birthday");
+						SimpleDateFormat sdf = new SimpleDateFormat("YYYY-MM-dd");
+						Date Birthday;
+						try {
+							Birthday = sdf.parse(birthday);
+							String Tel=data.getString("Tel");
+							String IDNo=data.getString("IDNo");
+							UsersService usersService=new UsersService();
+							usersService.reg(UserID, UserName, Sex, Birthday, Tel, IDNo);
+							
+						} catch (Exception e1) {
+							// TODO Auto-generated catch block
+							e1.printStackTrace();
+						}
 					}
 					}
 				}
