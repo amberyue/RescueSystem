@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.math.BigDecimal;
+import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -25,12 +26,16 @@ import bean.FindAED;
 import bean.FindCaller;
 import bean.FindVolunteer;
 import bean.loginResult;
+import domain.Contactlist;
+import domain.Responsor;
 import function.AED.AEDService;
 import function.callout.CalloutService;
 import function.location.LocationDao;
 import function.login.LoginDao;
 import function.nearbyEE.NearbyEEService;
 import function.rescueResponse.RescueResponceDao;
+import function.responsor.ResponsorsService;
+
 
 public class Main extends HttpServlet {
 
@@ -69,6 +74,7 @@ public class Main extends HttpServlet {
 		function.add("004");
 		function.add("005");
 		function.add("006");
+		function.add("009");
 		BasicResult BasicResult = new BasicResult();
 		SimpleDateFormat s = new SimpleDateFormat("yy-MM-dd HH:mm:ss");
 		long time = (long) 0;
@@ -92,27 +98,37 @@ public class Main extends HttpServlet {
 
 			LoginDao loginDao = new LoginDao();
 			Timestamp servertime=new Timestamp(System.currentTimeMillis());
-			loginResult loginUser = loginDao.login(userId, pwd, id);
-			
-			String ip = getRemoteHost(request);
-			loginDao.loginRecord(userId,loginUser.getUserName(),ip,servertime);
-			
+			System.out.println(userId);
+			System.out.println(pwd);
+			loginResult loginUser = loginDao.login(userId, pwd);
 			JSONObject jsonObject = new JSONObject();
 			jsonObject.put("retcode", loginUser.getRetcode());
 			jsonObject.put("msg", loginUser.getMsg());
-
 			JSONObject returnData = new JSONObject();
-			returnData.put("session_id", loginUser.getSessionid());
-			returnData.put("username",loginUser.getUserName());
-			Date birthday = loginUser.getBirthday();
 			
-			returnData.put("birthday",loginUser.getBirthday().toString());
-			returnData.put("sex",loginUser.getSex());
-			returnData.put("email",loginUser.getEmail());
-			returnData.put("address",loginUser.getAddress());
-			returnData.put("nation",loginUser.getNation());
+			if(loginUser.getUser()!=null){
+				String ip = getRemoteHost(request);
+				loginDao.loginRecord(userId,loginUser.getUser().getUserName(),ip,servertime);
+				returnData.put("session_id", id);
+				returnData.put("username",loginUser.getUser().getUserName());
+				Date birthday = loginUser.getUser().getBirthday();
+				returnData.put("birthday",loginUser.getUser().getBirthday().toString());
+				returnData.put("sex",loginUser.getUser().getSex());
+				returnData.put("email",loginUser.getUser().getEmail());
+				returnData.put("address",loginUser.getUser().getAddress());
+				returnData.put("nation",loginUser.getUser().getNation());
+				
+				
+				Contactlist contactList = loginDao.contactList(userId);
+				if (contactList!=null){
+					  JSONObject contact=new JSONObject();
+				      contact.put("cName", contactList.getCname());
+				      contact.put("TelNo", contactList.getTelNo());
+				      contact.put("Relationship", contactList.getRelationShip());
+				      returnData.put("ContactList",contact);
+				}
+			}
 			jsonObject.put("data", returnData);
-
 			response.setContentType("text/json; charset=utf-8");
 			response.getWriter().print(jsonObject);
 
@@ -194,8 +210,13 @@ public class Main extends HttpServlet {
 
 							List<FindVolunteer> volunteers = calloutService
 									.search(latitude, longitude);
-							calloutService.addEmergencyEvent(CallerID,
-									latitude, longitude, serverTime);
+							try {
+								calloutService.addEmergencyEvent(CallerID,
+										latitude, longitude, serverTime);
+							} catch (SQLException e) {
+								// TODO Auto-generated catch block
+								e.printStackTrace();
+							}
 							BasicResult.setRetcode("0");
 							BasicResult.setMsg("");
 							List list = new ArrayList();
@@ -320,6 +341,37 @@ public class Main extends HttpServlet {
 						response.getWriter().print(jsonObject);
 						break;
 					  }
+					case 7:{
+						
+						
+						
+						
+					}
+					case 9:{
+						 int eeID=Integer.parseInt( data.getString("eeID"));
+						 System.out.println(eeID);
+						 ResponsorsService responsorsService = new ResponsorsService();
+						 try {
+							JSONObject jsonObject = new JSONObject();
+							List<Responsor> findResponsors = responsorsService.findResponsors(eeID);
+							BasicResult.setRetcode("0");
+							BasicResult.setMsg("");
+							BasicResult.setData(data);
+							jsonObject.put("retcode", "0");
+							jsonObject.put("msg", "");
+							JSONArray returnData=JSONArray.fromObject(findResponsors);
+							jsonObject.element("data",returnData);
+							response.setContentType("text/json; charset=utf-8");
+							response.getWriter().print(jsonObject);
+							break; 
+						} catch (SQLException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+							
+						}
+						 
+						 
+					}
 					}
 				}
 			}

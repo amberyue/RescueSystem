@@ -5,78 +5,78 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.util.List;
 
+import org.apache.commons.dbutils.QueryRunner;
+import org.apache.commons.dbutils.handlers.BeanListHandler;
+
+import utils.C3P0Util;
 import utils.DBUtils;
-import bean.BasicResult;
 import bean.loginResult;
+import domain.Contactlist;
 import domain.Users;
 
 public class LoginDao {
 	
-	public loginResult login(String userId,String pwd,String id) {
+	public loginResult login(String userId,String pwd) {
 
-		Connection conn = null;
-		PreparedStatement ps = null;
-		ResultSet rs = null;
-		Users u = null;
-	    loginResult loginUser=new loginResult();
-	    String userName=null;
+		QueryRunner qr = new QueryRunner(C3P0Util.getDataSource());
+		String sql = "select u.userName,u.sex,u.birthday,u.address,u.email,u.nation from users u where u.UserID=? and u.pwd=?";
+		
 		try {
-			conn = DBUtils.getConnection();
-			String sql = "select u.userName,u.sex,u.birthday,u.address,u.email,u.nation from users u where u.UserID=? and u.pwd=?";
-			ps = conn.prepareStatement(sql);
-			ps.setString(1, userId);
-			ps.setString(2, pwd);
-			rs = ps.executeQuery();
-		//	System.out.println(rs.next());
-			
-			loginUser.setRetcode("2");
-			loginUser.setMsg("登陆用户名不存在");
-			while(rs.next()){
-				userName=rs.getString(1);
-				loginUser.setRetcode("0"); 
-				loginUser.setSessionid(id);
-				loginUser.setMsg("");
-				loginUser.setUserName(userName);
-				loginUser.setSex(rs.getString(2));
-				loginUser.setBirthday(rs.getDate(3));
-				loginUser.setAddress(rs.getString(4));
-				loginUser.setEmail(rs.getString(5));
-				loginUser.setNation(rs.getString(6));
+			List<Users> users=qr.query(sql,new BeanListHandler<Users>(Users.class),userId,pwd);
+			loginResult loginResult = new loginResult();
+			if(users.size()!=0){
+				loginResult.setUser(users.get(0));
+				loginResult.setRetcode("0");
+				loginResult.setMsg("");
 			}
 			
+			else{
+				loginResult.setMsg("登陆用户名不存在");
+				loginResult.setRetcode("2");
+				
+			}	
+			    return loginResult;
 		} catch (SQLException e) {
+			// TODO Auto-generated catch block
 			e.printStackTrace();
-		} finally {
-			DBUtils.closeALL(rs, ps, conn);
+			return null;
 		}
-		return loginUser;
+
+	}
+	
+	public Contactlist contactList(String UserID){
+		QueryRunner qr = new QueryRunner(C3P0Util.getDataSource());
+		String sql="select * from contactlist where UserID=?";
+		try {
+			List<Contactlist> contact = qr.query(sql, new BeanListHandler<Contactlist>(Contactlist.class),UserID);
+			if (contact.size()!=0){
+				 return contact.get(0);
+			}
+			else{
+				return null;
+			}
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return null;
+		}
+		
 	}
 	
 	public void loginRecord(String userId,String userName,String ip,Timestamp time) {
 
-		Connection conn = null;
-		PreparedStatement ps = null;
-		ResultSet rs=null;
-		try {
-			conn = DBUtils.getConnection();
-			String sql = "insert into logins(authenType,userId,userName,ip,machineName,loginTime) values (?,?,?,?,?,?)";
-			ps = conn.prepareStatement(sql);
-			ps.setShort(1, (short)1);
-			ps.setString(2, userId);
-			ps.setString(3,userName);
-			ps.setString(4,ip);
-			ps.setString(5,"");
-			ps.setTimestamp(6, time);
-			int i=ps.executeUpdate();
-			
-			System.out.println(i);
-			
-		} catch (SQLException e) {
-			e.printStackTrace();
-		} finally {
-			DBUtils.closeALL(rs, ps, conn);
-		}
+	QueryRunner qr=new QueryRunner(C3P0Util.getDataSource());
+	String sql = "insert into logins(authenType,userId,userName,ip,machineName,loginTime) values (?,?,?,?,?,?)";
+	   try {
+		qr.update(sql,(short)1, userId,userName,ip,"",time);
+		System.out.println("111");
+		
+	} catch (SQLException e) {
+		// TODO Auto-generated catch block
+		e.printStackTrace();
+	}
 		
 	}
 }

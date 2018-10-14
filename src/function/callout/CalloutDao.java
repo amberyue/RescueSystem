@@ -8,9 +8,14 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.dbutils.QueryRunner;
+import org.apache.commons.dbutils.handlers.BeanHandler;
+
+import utils.C3P0Util;
 import utils.DBUtils;
 import bean.FindVolunteer;
 import domain.Emergencyevents;
+import domain.Users;
 
 public class CalloutDao {
 
@@ -47,27 +52,12 @@ public class CalloutDao {
 		
 	}
 	
-	public String findCallerName(String callerID){
-		Connection conn = null;
-		PreparedStatement ps = null;
-		ResultSet rs = null;
-		String callerName=null;
-		try {
-			conn = DBUtils.getConnection();
-			String sql="select u.UserName from Users u where u.UserID=?";
-			ps = conn.prepareStatement(sql);
-			ps.setString(1,callerID);
-			rs = ps.executeQuery();
-			if(rs.next()){
-				callerName=rs.getString(1);
-			}
-			
-		} catch (SQLException e) {
-			e.printStackTrace();
-		} finally {
-			DBUtils.closeALL(rs, ps, conn);
-		}
-		return callerName;
+	public Users findUserByUserID(String UserID) throws SQLException{
+
+			QueryRunner qr=new QueryRunner(C3P0Util.getDataSource());
+			String sql="select * from Users  where UserID=?";
+			Users user=qr.query(sql, new BeanHandler<Users>(Users.class),UserID);
+		    return user;
 	}
 
 	public void addEmergencyEvent(Emergencyevents ee){

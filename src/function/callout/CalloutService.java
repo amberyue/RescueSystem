@@ -1,6 +1,7 @@
 package function.callout;
 
 import java.math.BigDecimal;
+import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -41,10 +42,11 @@ public class CalloutService {
 		return volunteerList;
 	}
 
-	public void addEmergencyEvent(String callerID, String latitude, String longitude, long serverTime) {
+	public void addEmergencyEvent(String callerID, String latitude, String longitude, long serverTime) throws SQLException {
 
 		Emergencyevents emergencyevents =new Emergencyevents();
-		String callerName = calloutDao.findCallerName(callerID);
+		String callerName= calloutDao.findUserByUserID(callerID).getUserName();
+		
 		emergencyevents.setCallerId(callerID);
 		emergencyevents.setCallerName(callerName);
 		emergencyevents.setLatitude(Double.parseDouble(latitude));

@@ -35,6 +35,19 @@ public class Users implements java.io.Serializable {
 	
 	// Constructors
 
+	@Override
+	public String toString() {
+		return "Users [autoid=" + autoid + ", userId=" + userId + ", userName="
+				+ userName + ", tel=" + tel + ", sex=" + sex
+				+ ", maritalStatus=" + maritalStatus + ", pwd=" + pwd
+				+ ", birthday=" + birthday + ", idno=" + idno + ", address="
+				+ address + ", email=" + email + ", nation=" + nation
+				+ ", status=" + status + ", roles=" + roles + ", createTime="
+				+ createTime + ", creatorId=" + creatorId + ", creatorName="
+				+ creatorName + ", latitude=" + latitude + ", longitude="
+				+ longitude + "]";
+	}
+
 	public BigDecimal getLatitude() {
 		return latitude;
 	}
