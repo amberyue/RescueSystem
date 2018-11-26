@@ -21,7 +21,7 @@ public class LoginDao {
 	public loginResult login(String userId,String pwd) {
 
 		QueryRunner qr = new QueryRunner(C3P0Util.getDataSource());
-		String sql = "select u.userName,u.sex,u.birthday,u.address,u.email,u.nation from users u where u.UserID=? and u.pwd=?";
+		String sql = "select u.userName,u.sex,u.birthday,u.address,u.email,u.nation,u.tel,u.pwd,u.address from users u where u.UserID=? and u.pwd=?";
 		
 		try {
 			List<Users> users=qr.query(sql,new BeanListHandler<Users>(Users.class),userId,pwd);

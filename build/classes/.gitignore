@@ -1,7 +1,8 @@
-/utils/
-/function/
-/c3p0-config.xml
-/domain/
 /bean/
-/service/
+/c3p0-config.xml
 /dao/
+/dbinfo.properties
+/domain/
+/function/
+/service/
+/utils/

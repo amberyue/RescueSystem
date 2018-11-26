@@ -13,13 +13,18 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
+import org.omg.CORBA.PRIVATE_MEMBER;
+
+import service.ContactListService;
 import service.UsersService;
+import utils.SHA2Utils;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import bean.BasicResult;
@@ -61,14 +66,14 @@ public class Main extends HttpServlet {
 			e.printStackTrace();
 		}
 		reader.close();// 关闭输入流
-
+ 
+	
 		String functionId = JSONObject.fromObject(result.toString()).getString(
 				"function_id");
 		String timestamp = JSONObject.fromObject(result.toString()).getString("timestamp");
 		
-		String digest = JSONObject.fromObject(result.toString()).getString("digest");
 		JSONObject data = JSONObject.fromObject(JSONObject.fromObject(result.toString()).getString("data"));
-		System.out.println(data);
+		System.out.println("data"+data);
 		List<String> function = new ArrayList();
 		function.add("002");
 		function.add("003");
@@ -77,21 +82,21 @@ public class Main extends HttpServlet {
 		function.add("006");
 		function.add("009");
 		function.add("010");
+		function.add("011");
+		function.add("012");
 		BasicResult BasicResult = new BasicResult();
-		SimpleDateFormat s = new SimpleDateFormat("yy-MM-dd HH:mm:ss");
-		long time = (long) 0;
-		try {
-			time = s.parse(timestamp).getTime();
-		} catch (ParseException e) {
-			e.printStackTrace();
-		}
-
+	  
+		Date date = new Date();
+		long time=date.getTime() ;
+		
 		if (functionId == null || functionId.trim() == "") {
                 
 		} else if (functionId.equals("001")) {
 
 			String userId =JSONObject.fromObject(data).getString("UserID");
-			String pwd =data.getString("pwd");
+			String password =data.getString("pwd");
+		    
+			String pwd=SHA2Utils.getSHA256StrJava(password);
 			// 创建session
 			HttpSession session = request.getSession(true);
 			String id = session.getId();
@@ -101,6 +106,8 @@ public class Main extends HttpServlet {
 			LoginDao loginDao = new LoginDao();
 			Timestamp servertime=new Timestamp(System.currentTimeMillis());
 			System.out.println(userId);
+			
+			
 			System.out.println(pwd);
 			loginResult loginUser = loginDao.login(userId, pwd);
 			JSONObject jsonObject = new JSONObject();
@@ -119,7 +126,10 @@ public class Main extends HttpServlet {
 				returnData.put("email",loginUser.getUser().getEmail());
 				returnData.put("address",loginUser.getUser().getAddress());
 				returnData.put("nation",loginUser.getUser().getNation());
-				
+				returnData.put("tel",loginUser.getUser().getTel());
+				returnData.put("address",loginUser.getUser().getAddress());
+				returnData.put("pwd",loginUser.getUser().getPwd());
+				returnData.put("UserID", userId);
 				
 				Contactlist contactList = loginDao.contactList(userId);
 				if (contactList!=null){
@@ -137,9 +147,13 @@ public class Main extends HttpServlet {
 		} else if (function.contains(functionId)) {
 			String session_id = JSONObject.fromObject(result.toString()).getString(
 					"session_id");
+			System.out.println("login产生的sessionid"+session_id);
+			
 		    String sessionID=request.getSession().getId();
-			if (null == request.getSession(false)||!(sessionID.equals(session_id)))
+		    System.out.println("请求的sessionid"+sessionID);
+			if ( session_id==null||session_id=="")
 			{
+				System.out.println("没有sessionid");
 				BasicResult.setRetcode("-9");
 				JSONObject jsonObject = new JSONObject();
 				jsonObject.put("retcode", BasicResult.getRetcode());
@@ -148,7 +162,7 @@ public class Main extends HttpServlet {
 			} else {
 				long serverTime = System.currentTimeMillis();
 				if ((serverTime - time) > 3600000) {
-
+					System.out.println("超时");
 					BasicResult.setRetcode("1");
 					BasicResult.setMsg(ERROR_MSG);
 					JSONObject jsonObject = new JSONObject();
@@ -174,10 +188,7 @@ public class Main extends HttpServlet {
 						check = check + latitude + longitude;
 
 						JSONObject jsonObject = new JSONObject();
-//						if (digest != SHA2Utils.getSHA256StrJava(check)) {
-//							BasicResult.setRetcode("1");
-//							
-//						} else 
+
 						{
 							String userID = (String) request.getSession(false).getAttribute("userid");
 							System.out.print(userID);
@@ -201,24 +212,23 @@ public class Main extends HttpServlet {
 
 						check = check + latitude + longitude;
 						JSONObject jsonObject = new JSONObject();
-//						if (digest != SHA2Utils.getSHA256StrJava(check)) {
-//							BasicResult.setRetcode("1");
-//						} else 
+
 						{
 							String CallerID = (String) request
 									.getSession(false).getAttribute("userid");
 							System.out.print(CallerID);
 							CalloutService calloutService = new CalloutService();
 
-							List<FindVolunteer> volunteers = calloutService
-									.search(latitude, longitude);
-							try {
-								calloutService.addEmergencyEvent(CallerID,
-										latitude, longitude, serverTime);
-							} catch (SQLException e) {
-								// TODO Auto-generated catch block
-								e.printStackTrace();
-							}
+							List<FindVolunteer> volunteers = calloutService.search(latitude, longitude);
+							
+								try {
+									calloutService.addEmergencyEvent(CallerID,
+											latitude, longitude, serverTime);
+								} catch (SQLException e) {
+									// TODO Auto-generated catch block
+									e.printStackTrace();
+								}
+						
 							BasicResult.setRetcode("0");
 							BasicResult.setMsg("");
 							List list = new ArrayList();
@@ -243,6 +253,7 @@ public class Main extends HttpServlet {
 						response.setContentType("text/json; charset=utf-8");
 						response.getWriter().print(jsonObject);
 						break;
+					
 					}
 					case 4: {
 						String emergencyID =data.getString("emergency_id");
@@ -251,10 +262,7 @@ public class Main extends HttpServlet {
 						
 						check = check + emergencyID + latitude + longitude;
 						JSONObject jsonObject = new JSONObject();
-//						if (digest != SHA2Utils.getSHA256StrJava(check)) {
-//							BasicResult.setRetcode("1");
-//
-//						} else
+
 						{
 							RescueResponceDao rrDao = new RescueResponceDao();
 
@@ -289,10 +297,7 @@ public class Main extends HttpServlet {
 
 						check = check + latitude + longitude;
 						JSONObject jsonObject = new JSONObject();
-//						if (digest != SHA2Utils.getSHA256StrJava(check)) {
-//							BasicResult.setRetcode("1");
-//
-//						} else
+
 						{
 							NearbyEEService nearbyEEService = new NearbyEEService();
 							List<Map<String, Object>> findNearEE = nearbyEEService
@@ -324,10 +329,7 @@ public class Main extends HttpServlet {
 
 						check = check + latitude + longitude;
 						JSONObject jsonObject = new JSONObject();
-//						if (digest != SHA2Utils.getSHA256StrJava(check)) {
-//							BasicResult.setRetcode("1");
-//
-//						} else
+
 						{
 							AEDService aedService = new AEDService();
 							List<FindAED> findNearbyAEDs = aedService
@@ -347,6 +349,7 @@ public class Main extends HttpServlet {
 						
 						
 						
+						break;
 						
 					}
 					case 9:{
@@ -373,24 +376,118 @@ public class Main extends HttpServlet {
 					}
 					case 10:{
 //					String UserID,String UserName,char Sex,Date Birthday,String Tel,String IDNo
+						
 						String UserID= data.getString("UserID");
 						String UserName=data.getString("UserName");
-						String Sex=data.getString("Sex");
+						String Tel=data.getString("Tel");
 						
-						String birthday=data.getString("Birthday");
-						SimpleDateFormat sdf = new SimpleDateFormat("YYYY-MM-dd");
-						Date Birthday;
+						String Sex = "";
+						String IDNo="";
+						String birthday;
+						Date Birthday=null;
+						String pwd="";
+						String email = "";
+						String address = "";
+						
+						Map<String,Object> map=new HashMap<String,Object>();
+						map.put("UserName", UserName);
+						map.put("Tel", Tel);
+						System.out.println("包不包含sex"+data.containsKey("Sex"));
+						System.out.println("包不包含pwd"+data.containsKey("pwd"));
+						if(data.containsKey("Sex")){
+							
+							Sex=data.getString("Sex");
+							IDNo=data.getString("IDNo");
+							birthday=data.getString("Birthday");
+							SimpleDateFormat sdf = new SimpleDateFormat("YYYY-MM-dd");
 						try {
 							Birthday = sdf.parse(birthday);
-							String Tel=data.getString("Tel");
-							String IDNo=data.getString("IDNo");
-							UsersService usersService=new UsersService();
-							usersService.reg(UserID, UserName, Sex, Birthday, Tel, IDNo);
+							map.put("Sex", Sex);
+							map.put("IDNo", IDNo);
+							map.put("Birthday", Birthday);
 							
-						} catch (Exception e1) {
+						} catch (ParseException e) {
 							// TODO Auto-generated catch block
-							e1.printStackTrace();
+							e.printStackTrace();
 						}
+						}
+						
+						if(data.containsKey("pwd")){
+							pwd=data.getString("pwd");
+							email=data.getString("email");
+							address=data.getString("address");
+							map.put("pwd", pwd);
+							map.put("email", email);
+							map.put("address", address);
+						}
+						
+						for (Entry<String, Object> key : map.entrySet()) { 
+							  System.out.println("Key = " + key); 
+							} 
+						try {
+							
+							UsersService usersService=new UsersService();
+							usersService.reg(UserID, UserName,Tel,map);
+						} catch (SQLException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+							
+						JSONObject jsonObject=new JSONObject();
+						jsonObject.put("retcode", 0);
+						jsonObject.put("msg","");
+						JSONObject returnData = new JSONObject();
+						jsonObject.put("data", returnData);
+					
+						response.setContentType("text/json; charset=utf-8");
+						response.getWriter().print(jsonObject);
+						break;
+					}
+					case 11:{
+						String UserID = data.getString("UserID");
+						String cName = data.getString("cName");
+						String TelNo = data.getString("TelNo");
+						String RelationShip = data.getString("RelationShip");
+						ContactListService contactListService = new ContactListService();
+						try {
+							contactListService.ContactListAddOrUpdate(UserID, cName, TelNo, RelationShip);
+						} catch (SQLException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+						JSONObject jsonObject=new JSONObject();
+						jsonObject.put("retcode", 0);
+						jsonObject.put("msg","");
+						JSONObject returnData = new JSONObject();
+						jsonObject.put("data", returnData);
+					
+						response.setContentType("text/json; charset=utf-8");
+						response.getWriter().print(jsonObject);
+						break;
+					}
+					case 12:{
+						String UserID=data.getString("UserID");
+						ContactListService contactListService = new ContactListService();
+						Contactlist sentMessage = contactListService.sentMessage(UserID);
+						JSONObject jsonObject=new JSONObject();
+						jsonObject.put("retcode", 0);
+						jsonObject.put("msg","");
+						JSONObject returnData=new JSONObject();
+						
+						JSONArray jsonArray = new JSONArray();
+						int sent=0;
+					    if(sentMessage!=null){
+					    	sent=1;
+					    	jsonArray.add(0, sentMessage.getCname());
+					    	jsonArray.add(1,sentMessage.getTelNo());
+					    	jsonArray.add(2,sentMessage.getRelationShip());
+							returnData.accumulate("sentMessage", jsonArray);
+					    }
+					    returnData.put("sent", sent);
+					    jsonObject.put("data",returnData);
+					    response.setContentType("text/json; charset=utf-8");
+						response.getWriter().print(jsonObject);
+						break;
 					}
 					}
 				}
@@ -430,7 +527,7 @@ public class Main extends HttpServlet {
 //		JSONObject jsonObject = new JSONObject();
 //		jsonObject.put("function_id", "001");
 //		jsonObject.put("timestamp", "23233322");
-//		jsonObject.put("digest", "ASFLKSJFJSDLFJS");
+
 //		jsonObject.put("Min.score", new Integer(99));
 //
 //		// 输出jsonobject对象

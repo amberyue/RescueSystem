@@ -45,7 +45,8 @@ public class SHA2Utils {
     }
 //   
     public static void main(String[] args){
-    	System.out.println(getSHA256StrJava("226ACE0E0257028399D9B5742AC794672018-06-26 19:00:00CPR0.000000000.00000001"));
+    	System.out.println(getSHA256StrJava("111111"));
+    	//bcb15f821479b4d5772bd0ca866c00ad5f926e3580720659cc80d39c9d09802a(111111)
     	//a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3
     	//8e318942818b79876a1237ed8d609d6e9e24a42356e39b209bb77a0fda471efe
     	//226ACE0E0257028399D9B5742AC794672018-06-26 16:00:00

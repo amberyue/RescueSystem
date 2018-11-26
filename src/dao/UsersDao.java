@@ -9,6 +9,7 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.dbutils.QueryRunner;
 import org.apache.commons.dbutils.handlers.BeanHandler;
@@ -148,10 +149,21 @@ public void insertUser(String UserID,String UserName,String Tel,String Sex,Strin
 	qr.update(sql,UserID, UserName,  Tel,Sex,MaritalStatus,pwd,Birthday, IDNo, Address,email,Nation,status,roles,CreateTime,CreatorID,CreatorName,longitude,latitude,search);
 	
 }
-public void updateUser(String UserID,String UserName,String Sex,Date Birthday,String Tel,String IDNo) throws SQLException{
+public void updateUser(String UserID,Map map) throws SQLException{
 	QueryRunner qr=new QueryRunner(C3P0Util.getDataSource());
-	String sql="update users set UserName=?,Sex=?,Birthday=?,Tel=?,IDNo=?  where UserID=?";
-	qr.update(sql,UserName,Sex,Birthday,Tel,IDNo,UserID);
+	
+	String str="Sex Birthday pwd IDNo email address Tel UserName";
+	String[] ss=str.split(" ");
+	String sql="update users set ";
+	for(String s:ss){
+		if(map.containsKey(s)){
+			sql=sql+s+"=\""+map.get(s)+"\",";
+		}
+	}
+	sql=sql.substring(0, sql.length()-1);
+	sql+=" where UserID=\""+UserID+"\"";
+	System.out.println(sql);
+	qr.update(sql);
 	
 }
 }
