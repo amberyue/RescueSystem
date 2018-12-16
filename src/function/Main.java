@@ -24,6 +24,7 @@ import org.omg.CORBA.PRIVATE_MEMBER;
 
 import service.ContactListService;
 import service.UsersService;
+import service.VolunteerMsgService;
 import utils.SHA2Utils;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
@@ -67,9 +68,8 @@ public class Main extends HttpServlet {
 		}
 		reader.close();// 关闭输入流
  
-	
-		String functionId = JSONObject.fromObject(result.toString()).getString(
-				"function_id");
+		System.out.println("result"+result);
+		String functionId = JSONObject.fromObject(result.toString()).getString("function_id");
 		String timestamp = JSONObject.fromObject(result.toString()).getString("timestamp");
 		
 		JSONObject data = JSONObject.fromObject(JSONObject.fromObject(result.toString()).getString("data"));
@@ -80,6 +80,7 @@ public class Main extends HttpServlet {
 		function.add("004");
 		function.add("005");
 		function.add("006");
+		function.add("007");
 		function.add("009");
 		function.add("010");
 		function.add("011");
@@ -100,7 +101,7 @@ public class Main extends HttpServlet {
 			// 创建session
 			HttpSession session = request.getSession(true);
 			String id = session.getId();
-			System.out.print(id);
+			System.out.println(id);
 			session.setAttribute("userid", userId);
 
 			LoginDao loginDao = new LoginDao();
@@ -191,7 +192,7 @@ public class Main extends HttpServlet {
 
 						{
 							String userID = (String) request.getSession(false).getAttribute("userid");
-							System.out.print(userID);
+							System.out.println(userID);
 							LocationDao locationDao = new LocationDao();
 							BasicResult = locationDao.addLocation(latitude,
 									longitude,userID);
@@ -216,39 +217,45 @@ public class Main extends HttpServlet {
 						{
 							String CallerID = (String) request
 									.getSession(false).getAttribute("userid");
-							System.out.print(CallerID);
+						
 							CalloutService calloutService = new CalloutService();
-
-							List<FindVolunteer> volunteers = calloutService.search(latitude, longitude);
 							
-								try {
-									calloutService.addEmergencyEvent(CallerID,
-											latitude, longitude, serverTime);
-								} catch (SQLException e) {
-									// TODO Auto-generated catch block
-									e.printStackTrace();
-								}
+							 try {
+								
+								calloutService.search(latitude, longitude);
+							} catch (Exception e1) {
+								// TODO Auto-generated catch block
+								e1.printStackTrace();
+							}
+//							 List<FindVolunteer> volunteer =
+//								try {
+//									calloutService.addEmergencyEvent(CallerID,
+//											latitude, longitude, serverTime);
+//								} catch (SQLException e) {
+//									// TODO Auto-generated catch block
+//									e.printStackTrace();
+//								}
 						
 							BasicResult.setRetcode("0");
 							BasicResult.setMsg("");
 							List list = new ArrayList();
 							int i = 0;
-							for (FindVolunteer volunteer : volunteers) {
-
-								Map<String, String> map4 = new HashMap();
-								map4.put("name", volunteer.getUsername());
-								map4.put("latitude", volunteer.getLatitude()
-										.toString());
-								map4.put("longitude", volunteer.getLongitude()
-										.toString());
-
-								list.add(i, map4);
-								i++;
-							}
+//							for (FindVolunteer volunteer : volunteers) {
+//
+//								Map<String, String> map4 = new HashMap();
+//								map4.put("name", volunteer.getUsername());
+//								map4.put("latitude", volunteer.getLatitude()
+//										.toString());
+//								map4.put("longitude", volunteer.getLongitude()
+//										.toString());
+//
+//								list.add(i, map4);
+//								i++;
+//							}
 							jsonObject.put("retcode", BasicResult.getRetcode());
 							jsonObject.put("msg", BasicResult.getMsg());
-							JSONArray returnData = JSONArray.fromObject(list);
-							jsonObject.element("data", returnData);
+//							JSONArray returnData = JSONArray.fromObject(list);
+							jsonObject.element("data", "");
 						}
 						response.setContentType("text/json; charset=utf-8");
 						response.getWriter().print(jsonObject);
@@ -329,7 +336,6 @@ public class Main extends HttpServlet {
 
 						check = check + latitude + longitude;
 						JSONObject jsonObject = new JSONObject();
-
 						{
 							AEDService aedService = new AEDService();
 							List<FindAED> findNearbyAEDs = aedService
@@ -346,6 +352,11 @@ public class Main extends HttpServlet {
 						break;
 					  }
 					case 7:{
+						String cid=data.getString("cid");
+						String UserID=data.getString("UserID");
+						
+						VolunteerMsgService vMsgService=new VolunteerMsgService();
+//						vMsgService.Online(cid,UserID);
 						
 						
 						
@@ -509,69 +520,7 @@ public class Main extends HttpServlet {
 		    }
 		    return ip.equals("0:0:0:0:0:0:0:1")?"127.0.0.1":ip;
 		}
-	 //request.getSession(false)==null可以近似的判断是否过期：如果已经过期，那么返回的是null，但是当起一次请求，刚刚建立一个session的时候，上述方法也返回null
-	 //所以应该这个做
-	 // if(null==request.getSession(false)){
-	 // if(true==request.getSession(true).isNew()){
-	 // }
-	 // else{
-	 // System.out.println("session已经过期");
-	 // }
-	 // }
-	// }
-	// default:{
-	//
-	// }
 
-//	private static JSONObject createJSONArray() {
-//		JSONObject jsonObject = new JSONObject();
-//		jsonObject.put("function_id", "001");
-//		jsonObject.put("timestamp", "23233322");
-
-//		jsonObject.put("Min.score", new Integer(99));
-//
-//		// 输出jsonobject对象
-//		// System.out.println("jsonObject==>"+jsonObject);
-//
-//		// 判读输出对象的类型
-//		boolean isArray = jsonObject.isArray();
-//		boolean isEmpty = jsonObject.isEmpty();
-//		boolean isNullObject = jsonObject.isNullObject();
-//		// System.out.println("isArray:"+isArray+" isEmpty:"+isEmpty+" isNullObject:"+isNullObject);
-//
-//		// 添加属性
-//		jsonObject.element("address", "福建省厦门市");
-//		// System.out.println("添加属性后的对象==>"+jsonObject);
-//
-//		// 返回一个JSONArray对象
-//		JSONArray jsonArray = new JSONArray();
-//		List<Map<String, Object>> list = new ArrayList();
-//
-//		Map<String, Object> map1 = new HashMap();
-//		Map<String, Object> map2 = new HashMap();
-//		map1.put("UserID", "sys001");
-//		map1.put("aa", "a");
-//		map2.put("pwd", "sdfsfsfdsdfsd");
-//		list.add(0, map1);
-//		list.add(1, map2);
-//		jsonArray.add(0, list.get(0));
-//		jsonArray.add(1, list.get(1));
-//
-//		jsonObject.element("jsonArray", jsonArray);
-//		JSONArray array = jsonObject.getJSONArray("jsonArray");
-//		return jsonObject;
-//	}
-//
-//	public static void main(String[] args) {
-//		JSONObject array = createJSONArray();
-//
-//		Map<String, Object> map = (Map<String, Object>) (JSONArray
-//				.fromObject(JSONObject.fromObject(array).getString("jsonArray")))
-//				.get(0);
-//	//	String s = (String) map.get("UserID");
-//		System.out.println(array);
-//
-//	}
 	
 
 }
