@@ -7,7 +7,6 @@ import java.math.BigDecimal;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -20,18 +19,15 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
-import org.omg.CORBA.PRIVATE_MEMBER;
-
+import net.sf.json.JSONArray;
+import net.sf.json.JSONObject;
 import service.ContactListService;
 import service.UsersService;
 import service.VolunteerMsgService;
 import utils.SHA2Utils;
-import net.sf.json.JSONArray;
-import net.sf.json.JSONObject;
 import bean.BasicResult;
 import bean.FindAED;
 import bean.FindCaller;
-import bean.FindVolunteer;
 import bean.loginResult;
 import domain.Contactlist;
 import domain.Responsor;
@@ -392,6 +388,7 @@ public class Main extends HttpServlet {
 						String UserName=data.getString("UserName");
 						String Tel=data.getString("Tel");
 						
+//						String Birthday=data.getString("Birthday");
 						String Sex = "";
 						String IDNo="";
 						String birthday;
@@ -399,9 +396,10 @@ public class Main extends HttpServlet {
 						String pwd="";
 						String email = "";
 						String address = "";
+						String str="1996-01-05";
 						
 						Map<String,Object> map=new HashMap<String,Object>();
-						map.put("UserName", UserName);
+						map.put("User Name", UserName);
 						map.put("Tel", Tel);
 						System.out.println("包不包含sex"+data.containsKey("Sex"));
 						System.out.println("包不包含pwd"+data.containsKey("pwd"));
@@ -409,18 +407,13 @@ public class Main extends HttpServlet {
 							
 							Sex=data.getString("Sex");
 							IDNo=data.getString("IDNo");
+							
 							birthday=data.getString("Birthday");
-							SimpleDateFormat sdf = new SimpleDateFormat("YYYY-MM-dd");
-						try {
-							Birthday = sdf.parse(birthday);
+							System.out.println("birthday     ："+birthday);
+	
 							map.put("Sex", Sex);
 							map.put("IDNo", IDNo);
-							map.put("Birthday", Birthday);
-							
-						} catch (ParseException e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
-						}
+							map.put("Birthday", birthday);
 						}
 						
 						if(data.containsKey("pwd")){
@@ -429,21 +422,33 @@ public class Main extends HttpServlet {
 							address=data.getString("address");
 							map.put("pwd", pwd);
 							map.put("email", email);
-							map.put("address", address);
+							map.put(" ", address);
 						}
 						
 						for (Entry<String, Object> key : map.entrySet()) { 
 							  System.out.println("Key = " + key); 
 							} 
+				
 						try {
 							
 							UsersService usersService=new UsersService();
 							usersService.reg(UserID, UserName,Tel,map);
 						} catch (SQLException e) {
-							// TODO Auto-generated catch block
 							e.printStackTrace();
 						}
-							
+						
+						if(data.containsKey("cName")){
+							String cName = data.getString("cName");
+							String TelNo = data.getString("TelNo");
+							String RelationShip = data.getString("RelationShip");
+							ContactListService contactListService = new ContactListService();
+							try {
+								contactListService.ContactListAddOrUpdate(UserID, cName, TelNo, RelationShip);
+							} catch (SQLException e) {
+								e.printStackTrace();
+							}
+						}
+					
 						JSONObject jsonObject=new JSONObject();
 						jsonObject.put("retcode", 0);
 						jsonObject.put("msg","");
@@ -454,28 +459,7 @@ public class Main extends HttpServlet {
 						response.getWriter().print(jsonObject);
 						break;
 					}
-					case 11:{
-						String UserID = data.getString("UserID");
-						String cName = data.getString("cName");
-						String TelNo = data.getString("TelNo");
-						String RelationShip = data.getString("RelationShip");
-						ContactListService contactListService = new ContactListService();
-						try {
-							contactListService.ContactListAddOrUpdate(UserID, cName, TelNo, RelationShip);
-						} catch (SQLException e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
-						}
-						JSONObject jsonObject=new JSONObject();
-						jsonObject.put("retcode", 0);
-						jsonObject.put("msg","");
-						JSONObject returnData = new JSONObject();
-						jsonObject.put("data", returnData);
-					
-						response.setContentType("text/json; charset=utf-8");
-						response.getWriter().print(jsonObject);
-						break;
-					}
+//					 
 					case 12:{
 						String UserID=data.getString("UserID");
 						ContactListService contactListService = new ContactListService();
